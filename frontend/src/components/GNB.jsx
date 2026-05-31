@@ -21,7 +21,7 @@ const InstagramIcon = ({ size = 20, ...props }) => (
   </svg>
 );
 
-const GNB = () => {
+const GNB = ({ username }) => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
@@ -75,13 +75,15 @@ const GNB = () => {
           </ul>
 
           {/* User Account Info */}
-          <div className="hidden sm:flex items-center gap-2 border-l border-slate-200 pl-6">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-xs font-semibold text-slate-500">연동 계정</span>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">
-              @official_user
-            </span>
-          </div>
+          {username && (
+            <div className="hidden sm:flex items-center gap-2 border-l border-slate-200 pl-6">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs font-semibold text-slate-500">연동 계정</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">
+                @{username}
+              </span>
+            </div>
+          )}
         </nav>
       </div>
     </header>

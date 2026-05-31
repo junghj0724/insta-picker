@@ -14,19 +14,6 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-const MOCK_COMMENTS_POOL = [
-  { username: "lucky_winner_id", text: "이벤트 참여합니다! 꼭 뽑아주세요 ❤️" },
-  { username: "insta_lover", text: "신제품 런칭 축하드립니다! 꼭 당첨되었으면 좋겠어요! #참여완료" },
-  { username: "react_developer", text: "댓글 추첨 프로그램 너무 멋지네요. 응원합니다." },
-  { username: "j_hyun_jin_99", text: "과제 제출 완료! 꼭 당첨되길 바랍니다!" },
-  { username: "comment_king", text: "인스타 댓글 당첨되고 싶어요~! 좋은 하루 되세요." },
-  { username: "coffee_holic", text: "아메리카노 쿠폰 가즈아~!! 대박나세요." },
-  { username: "happy_today", text: "이벤트 열어주셔서 감사합니다. 참여 완료합니다!" },
-  { username: "winner_winner", text: "내가 바로 오늘의 주인공! 뽑아주세요!" },
-  { username: "pick_me_up", text: "이벤트 피드 공유도 완료했습니다. 뽑아주세요!!" },
-  { username: "gold_hand", text: "제 손이 똥손이 아니길 바라며 참여합니다!! #이벤트" }
-];
-
 // lucide-react 호환성 방지를 위한 자체 인스타그램 아이콘 SVG
 const InstagramIcon = ({ size = 20, ...props }) => (
   <svg
@@ -66,12 +53,18 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [winners, setWinners] = useState([]);
-  const [rollingTextIndex, setRollingTextIndex] = useState(0);
 
   // 2. 초기 통계 정보 로드
   const fetchStats = async () => {
     setLoading(true);
     const data = await apiClient.getDashboardStats();
+    
+    // UX 보완: 실제 연동 계정명(username)이 확인되면, 통계 API 연결 전이거나 0이더라도 연동 계정 수를 1개로 보정
+    const activeUser = await apiClient.getConnectedAccount();
+    if (activeUser && data.connectedAccounts === 0) {
+      data.connectedAccounts = 1;
+    }
+    
     setStats(data);
     setLoading(false);
   };
@@ -107,14 +100,8 @@ const Dashboard = () => {
     const results = await apiClient.drawWinners(drawParams);
     setWinners(results);
 
-    // 추첨 중 롤링 효과 (0.1초마다 아이디 롤링)
-    let rollInterval = setInterval(() => {
-      setRollingTextIndex(prev => (prev + 1) % 10);
-    }, 100);
-
     // 1.5초 후 당첨 화면으로 전환
     setTimeout(async () => {
-      clearInterval(rollInterval);
       setIsDrawing(false);
       setStep('winner');
 
@@ -345,20 +332,6 @@ const Dashboard = () => {
             })}
           </div>
 
-          {/* Navigation to next step */}
-          <div className="flex justify-end pt-4">
-            <button
-              onClick={() => setStep('settings_filter')}
-              disabled={!selectedPost}
-              className={`flex items-center gap-1 rounded-xl px-6 py-3.5 text-sm font-bold shadow-lg transition-all duration-200 ${
-                selectedPost
-                  ? 'bg-brand-primary text-white shadow-brand-primary/20 hover:-translate-y-0.5 hover:bg-brand-primary-hover active:translate-y-0'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-              }`}
-            >
-              필터 설정 단계로 이동 <ChevronRight size={16} />
-            </button>
-          </div>
         </div>
       )}
 
@@ -604,7 +577,7 @@ const Dashboard = () => {
       )}
 
       {/* ──────────────────────────────────────────────────────── */}
-      {/* OVERLAY: 추첨 중 롤링 애니메이션 */}
+      {/* OVERLAY: 추첨 중 로딩 애니메이션 */}
       {/* ──────────────────────────────────────────────────────── */}
       {isDrawing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/60 backdrop-blur-sm">
@@ -613,27 +586,32 @@ const Dashboard = () => {
               댓글 데이터 수집 중...
             </h3>
             
-            {/* Rolling Text Board */}
-            <div className="relative h-20 w-full overflow-hidden rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center">
-              <div className="absolute flex flex-col transition-all duration-75 text-center">
-                <span className="text-lg font-bold text-brand-primary">
-                  @{MOCK_COMMENTS_POOL[rollingTextIndex].username}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold truncate max-w-[280px]">
-                  {MOCK_COMMENTS_POOL[rollingTextIndex].text}
-                </span>
-              </div>
-            </div>
-            
             {/* Spinning Indicator */}
-            <div className="flex justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-primary border-t-transparent"></div>
+            <div className="flex justify-center py-4">
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-brand-primary border-t-transparent"></div>
             </div>
             
             <p className="text-xs font-bold text-slate-400">
               필터링 조건에 부합하는 댓글을 선별하고 있습니다.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* 플로팅 버튼을 transform 애니메이션 부모 바깥인 main 하단에 직접 렌더링하여 브라우저 화면 기준 고정 보장 */}
+      {step === 'select_post' && (
+        <div className="fixed bottom-8 right-8 z-50 transition-all duration-300">
+          <button
+            onClick={() => selectedPost && setStep('settings_filter')}
+            disabled={!selectedPost}
+            className={`flex items-center gap-1.5 rounded-2xl px-6 py-4 text-sm font-extrabold shadow-2xl transition-all duration-300 ${
+              selectedPost
+                ? 'bg-brand-primary text-white shadow-brand-primary/45 hover:-translate-y-1 hover:bg-brand-primary-hover hover:scale-[1.02] cursor-pointer'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none scale-95 opacity-80'
+            }`}
+          >
+            필터 설정 단계로 이동 <ChevronRight size={16} className="stroke-[3]" />
+          </button>
         </div>
       )}
 
