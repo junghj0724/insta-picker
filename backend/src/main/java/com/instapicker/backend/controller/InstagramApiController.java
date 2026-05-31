@@ -1,5 +1,6 @@
 package com.instapicker.backend.controller;
 
+import com.instapicker.backend.dto.InstagramApiForm;
 import com.instapicker.backend.service.InstagramApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +19,7 @@ public class InstagramApiController {
 
     // 프론트엔드가 이 주소로 GET 요청을 보내면 진짜 인스타 게시물 목록을 응답!
     @GetMapping("/posts")
-    public List<Map<String, Object>> getPosts() {
+    public List<InstagramApiForm> getPosts() {
         return instagramApiService.getMyPosts();
     }
 
