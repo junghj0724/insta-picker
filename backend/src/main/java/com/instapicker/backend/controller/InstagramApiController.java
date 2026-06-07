@@ -1,9 +1,13 @@
 package com.instapicker.backend.controller;
 
 import com.instapicker.backend.dto.InstagramApiForm;
+import com.instapicker.backend.dto.InstagramCommentDto;
+import com.instapicker.backend.dto.InstagramDrawRequest;
 import com.instapicker.backend.service.InstagramApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,5 +30,11 @@ public class InstagramApiController {
     @GetMapping("/user")
     public Map<String, String> getUserProfile() {
         return instagramApiService.getUserProfile(); // 방금 만든 서비스 메서드 호출
+    }
+
+    // 프론트엔드가 필터 옵션을 실어서 이 주소로 POST 요청을 보내면 필터링 후 무작위 추첨 수행
+    @PostMapping("/draw")
+    public List<InstagramCommentDto> drawWinners(@RequestBody InstagramDrawRequest request) {
+        return instagramApiService.drawWinners(request);
     }
 }

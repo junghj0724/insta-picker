@@ -20,4 +20,8 @@ public class DrawHistoryService {
     public DrawHistoryEntity saveHistory(DrawHistoryEntity historyEntity) {
         return repository.save(historyEntity);
     }
+
+    public void deleteHistory(Long id) {
+        repository.deleteById(id);
+    }
 }

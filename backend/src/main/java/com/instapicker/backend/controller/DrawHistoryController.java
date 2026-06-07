@@ -26,4 +26,9 @@ public class DrawHistoryController {
         DrawHistoryEntity historyEntity = form.toEntity();
         return service.saveHistory(historyEntity);
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteHistory(@PathVariable Long id) {
+        service.deleteHistory(id);
+    }
 }

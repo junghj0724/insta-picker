@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
-import { Calendar, MessageSquare, Award, CheckCircle, Database } from 'lucide-react';
+import { Calendar, MessageSquare, Award, CheckCircle, Database, Trash2 } from 'lucide-react';
 
 const History = () => {
   const [historyList, setHistoryList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const userRole = localStorage.getItem('user_role'); // Role 확인
 
   // 1. 이력 로드
   const fetchHistory = async () => {
@@ -12,6 +13,19 @@ const History = () => {
     const data = await apiClient.getHistory();
     setHistoryList(data);
     setLoading(false);
+  };
+
+  // 2. 이력 삭제 (ADMIN 전용)
+  const handleDelete = async (id) => {
+    if (!window.confirm("정말로 이 추첨 이력을 삭제하시겠습니까?")) return;
+    
+    const success = await apiClient.deleteHistory(id);
+    if (success) {
+      alert("삭제되었습니다.");
+      fetchHistory(); // 목록 새로고침
+    } else {
+      alert("삭제에 실패했습니다. 권한이 없거나 서버 오류입니다.");
+    }
   };
 
   useEffect(() => {
@@ -43,12 +57,13 @@ const History = () => {
                   <th className="px-6 py-4.5">총 댓글</th>
                   <th className="px-6 py-4.5">당첨자</th>
                   <th className="px-6 py-4.5">상태</th>
+                  {userRole === 'ROLE_ADMIN' && <th className="px-6 py-4.5 text-right">관리</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-sm font-semibold text-slate-600">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={userRole === 'ROLE_ADMIN' ? "6" : "5"} className="px-6 py-12 text-center text-slate-400">
                       <div className="flex justify-center items-center gap-2">
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-primary border-t-transparent"></div>
                         이력 데이터 불러오는 중...
@@ -57,7 +72,7 @@ const History = () => {
                   </tr>
                 ) : historyList.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
+                    <td colSpan={userRole === 'ROLE_ADMIN' ? "6" : "5"} className="px-6 py-12 text-center text-slate-400">
                       추첨 이력이 존재하지 않습니다.
                     </td>
                   </tr>
@@ -103,6 +118,19 @@ const History = () => {
                           {item.status}
                         </span>
                       </td>
+
+                      {/* Admin Actions */}
+                      {userRole === 'ROLE_ADMIN' && (
+                        <td className="px-6 py-5.5 whitespace-nowrap text-right">
+                          <button 
+                            onClick={() => handleDelete(item.id)}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 transition-colors bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg"
+                          >
+                            <Trash2 size={14} />
+                            삭제
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}

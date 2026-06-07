@@ -9,6 +9,20 @@ const api = axios.create({
   timeout: 5000,
 });
 
+// Axios Request Interceptor: 모든 API 요청에 JWT 토큰 자동 주입
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // 백엔드 API 실패 또는 미구현 시 사용할 빈 안전 기본값 정의
 const EMPTY_STATS = {
   connectedAccounts: 0,
@@ -17,6 +31,17 @@ const EMPTY_STATS = {
 };
 
 export const apiClient = {
+  // 인증 관련 API
+  login: async (username, password) => {
+    const response = await api.post('/member/login', { username, password });
+    return response.data; // JWT Token string
+  },
+
+  signup: async (username, password) => {
+    const response = await api.post('/member/join', { username, password });
+    return response.data;
+  },
+
   // 0. 연동된 인스타그램 계정 정보 조회 (실제 백엔드 연동)
   getConnectedAccount: async () => {
     try {
@@ -83,6 +108,17 @@ export const apiClient = {
     } catch (error) {
       console.error("추첨 이력 저장 실패 (백엔드 /api/history 확인 요망): ", error);
       return null;
+    }
+  },
+
+  // 6. 추첨 이력 삭제 (ADMIN 전용)
+  deleteHistory: async (id) => {
+    try {
+      await api.delete(`/history/${id}`);
+      return true;
+    } catch (error) {
+      console.error("추첨 이력 삭제 실패: ", error);
+      return false;
     }
   }
 };
